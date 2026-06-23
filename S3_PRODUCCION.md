@@ -22,7 +22,7 @@ Antes de configurar S3, asegúrate de que tu proyecto cumpla con lo siguiente:
 2. Busca el servicio **S3** y haz clic en **Create bucket**
 3. Configura el bucket:
    - **Bucket name**: `misterticket-prod` (debe ser único globalmente)
-   - **AWS Region**: Elige la más cercana a tus usuarios (ej. `us-east-1` o `sa-east-1` para Sudamérica)
+   - **AWS Region**: `us-east-2` (Ohio) — debe coincidir con la región de tu EC2 y RDS
    - **Object Ownership**: Selecciona **ACLs enabled** → **Bucket owner preferred**
 4. En la sección **Block Public Access settings**:
    - Desmarca **"Block all public access"**
@@ -114,7 +114,7 @@ USE_S3=True
 AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
 AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 AWS_STORAGE_BUCKET_NAME=misterticket-prod
-AWS_S3_REGION_NAME=us-east-1
+AWS_S3_REGION_NAME=us-east-2
 # Para producción en AWS S3, NO se usa AWS_S3_ENDPOINT_URL (se deja vacío o se omite)
 ```
 
@@ -126,7 +126,7 @@ heroku config:set USE_S3=True
 heroku config:set AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
 heroku config:set AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 heroku config:set AWS_STORAGE_BUCKET_NAME=misterticket-prod
-heroku config:set AWS_S3_REGION_NAME=us-east-1
+heroku config:set AWS_S3_REGION_NAME=us-east-2
 ```
 
 **Railway:**
@@ -180,7 +180,7 @@ from django.core.files.storage import default_storage
 # Crear un archivo de prueba
 path = default_storage.save('test/hello.txt', ContentFile(b'Hola S3'))
 print(default_storage.url(path))
-# Debe retornar una URL tipo: https://misterticket-prod.s3.amazonaws.com/test/hello.txt
+# Debe retornar una URL tipo: https://misterticket-prod.s3.us-east-2.amazonaws.com/test/hello.txt
 ```
 
 ### 3. Verificar acceso público
@@ -201,7 +201,7 @@ foto: <archivo de imagen>
 La respuesta debería incluir la URL de la imagen en S3, por ejemplo:
 ```json
 {
-  "foto": "https://misterticket-prod.s3.amazonaws.com/usuarios/fotos/1/foto_usuario_1.jpg"
+  "foto": "https://misterticket-prod.s3.us-east-2.amazonaws.com/usuarios/fotos/1/foto_usuario_1.jpg"
 }
 ```
 
