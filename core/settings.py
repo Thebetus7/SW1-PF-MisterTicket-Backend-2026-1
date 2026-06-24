@@ -74,16 +74,16 @@ WSGI_APPLICATION = 'core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'prueba',
-        'USER': 'neondb_owner',
-        'PASSWORD': 'npg_csKG9yDXOaB0',
-        'HOST': 'ep-shy-wind-acg84pj4.sa-east-1.aws.neon.tech',
-        'PORT': '5432',
-        'OPTIONS': {
-            'sslmode': 'require',
-        },
+        'NAME': os.getenv('DB_NAME', 'prueba'),
+        'USER': os.getenv('DB_USER', 'neondb_owner'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'npg_csKG9yDXOaB0'),
+        'HOST': os.getenv('DB_HOST', 'ep-shy-wind-acg84pj4.sa-east-1.aws.neon.tech'),
+        'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
+
+if 'neon.tech' in DATABASES['default']['HOST']:
+    DATABASES['default']['OPTIONS'] = {'sslmode': 'require'}
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',},
