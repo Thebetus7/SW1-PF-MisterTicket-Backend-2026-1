@@ -7,7 +7,10 @@ services:
     buildCommand: |
       pip install -r requirements.txt &&
       python manage.py collectstatic --noinput &&
-      python manage.py migrate --noinput
+      python manage.py migrate --noinput &&
+      python manage.py seed_admin &&
+      python manage.py seeder_eventos &&
+      python manage.py seeder_add_artistas
     startCommand: gunicorn core.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120
     envVars:
       - key: SECRET_KEY

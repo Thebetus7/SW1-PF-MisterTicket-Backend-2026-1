@@ -68,11 +68,11 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 ```
 
-### 1.3 — Crear el archivo `render.yaml` en la raíz del backend
+### 1.3 — Crear el archivo `render.yml` en la raíz del backend
 
 Este archivo le dice a Render cómo construir y correr tu backend.
 
-📄 **`render.yaml`** (en `MisterTicket/backend/`):
+📄 **`render.yml`** (en `MisterTicket/backend/`):
 
 ```yaml
 services:
@@ -84,7 +84,10 @@ services:
     buildCommand: |
       pip install -r requirements.txt &&
       python manage.py collectstatic --noinput &&
-      python manage.py migrate --noinput
+      python manage.py migrate --noinput &&
+      python manage.py seed_admin &&
+      python manage.py seeder_eventos &&
+      python manage.py seeder_add_artistas
     startCommand: gunicorn core.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120
     envVars:
       - key: SECRET_KEY
@@ -99,16 +102,24 @@ services:
         sync: false
       - key: BACKEND_BASE_URL
         sync: false
+      - key: DJANGO_SUPERUSER_USERNAME
+        sync: false
+      - key: DJANGO_SUPERUSER_EMAIL
+        sync: false
+      - key: DJANGO_SUPERUSER_PASSWORD
+        sync: false
 ```
 
-> `sync: false` significa que esas variables las pondrás tú a mano en el dashboard (más seguro). `generateValue: true` hace que Render cree un `SECRET_KEY` aleatorio.
+> `sync: false` = esas variables las configuras tú en el dashboard. Los **seeders corren solos** en cada deploy (son idempotentes: no duplican datos si ya existen).
+
+> **Nota:** si usas **Blueprint**, Render busca el archivo `render.yaml`. Renombra `render.yml` → `render.yaml` o duplica el contenido.
 
 ### 1.4 — Subir todo a GitHub
 
 ```bash
 cd MisterTicket/backend
-git add requirements.txt core/settings.py render.yaml
-git commit -m "Preparar despliegue en Render"
+git add requirements.txt core/settings.py render.yml
+git commit -m "Preparar despliegue en Render con seeders"
 git push origin main
 ```
 
@@ -145,7 +156,7 @@ git push origin main
 | **Branch** | `main` |
 | **Root Directory** | `backend` (si el repo tiene frontend también) |
 | **Runtime** | Python 3 |
-| **Build Command** | `pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate --noinput` |
+| **Build Command** | `pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate --noinput && python manage.py seed_admin && python manage.py seeder_eventos && python manage.py seeder_add_artistas` |
 | **Start Command** | `gunicorn core.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120` |
 | **Plan** | Free |
 
@@ -207,30 +218,113 @@ Render monta el archivo en `/opt/render/project/src/firebase-credentials.json` (
 
 ---
 
-## 6. Primer despliegue: correr seeders
+## 6. Seeders — datos iniciales del backend
 
-Una vez que el deploy termine con estado **Live**, abre la pestaña **Shell** (a la derecha del dashboard del servicio):
+Los seeders crean usuarios, eventos y artistas de prueba. **Antes** solo corrían a mano; ahora el `buildCommand` los ejecuta en cada deploy.
+
+| Comando | Qué crea | ¿Obligatorio? |
+|---|---|---|
+| `seed_admin` | Superusuario `admin` + fans, artistas, promotores, verificadores | ✅ Sí |
+| `seeder_eventos` | Departamentos, lugares, 2 eventos con asientos | Demo |
+| `seeder_add_artistas` | 15 artistas con géneros musicales | Demo |
+
+> Los tres son **idempotentes**: si vuelves a ejecutarlos, no duplican registros que ya existen.
+
+---
+
+### 🚨 Ya levantaste Render pero NO corriste seeders (tu caso)
+
+**No necesitas borrar ni recrear el servicio.** Tampoco hace falta “volver a levantarlo” desde cero. Solo entra al **Shell** y ejecuta los comandos.
+
+#### Paso a paso en el dashboard de Render
+
+1. Entra a [https://dashboard.render.com](https://dashboard.render.com)
+2. Clic en tu servicio **`misterticket-backend`** (estado **Live**)
+3. En el menú superior del servicio, clic en **Shell** (icono de terminal)
+4. Espera a que abra la consola (prompt tipo `$`)
+5. Ejecuta **uno por uno**:
+
+```bash
+python manage.py seed_admin
+python manage.py seeder_eventos
+python manage.py seeder_add_artistas
+```
+
+6. Verifica que no haya errores rojos al final de cada comando
+7. Prueba el admin en el navegador:
+
+```
+https://TU-URL.onrender.com/admin/
+```
+
+Credenciales por defecto (si no configuraste `DJANGO_SUPERUSER_*`):
+
+| Usuario | Contraseña |
+|---|---|
+| `admin` | `admin123` |
+
+Otros usuarios de prueba creados por `seed_admin`:
+
+| Usuario | Contraseña | Rol |
+|---|---|---|
+| `fan1` | `fan12345` | fan |
+| `artista1` | `artista12345` | artista |
+| `promotor1` | `promotor123` | promotor |
+| `verificador1` | `verificador12345` | verificador |
+
+#### ¿Tengo que redeployar?
+
+| Situación | ¿Redeploy? |
+|---|---|
+| Ejecutar seeders **ahora** desde Shell | ❌ **No** — hazlo ya en Shell |
+| Actualizar `render.yml` en GitHub para futuros deploys | ✅ Sí — `git push` y Render redeploya solo |
+| Cambiar variables en Environment | ✅ Render redeploya solo al guardar |
+
+**Resumen:** para arreglar **hoy**, usa **Shell**. El `git push` del `render.yml` actualizado es para que **en el futuro** los seeders corran solos en cada deploy.
+
+#### Comprobar desde Shell si ya hay datos
+
+```bash
+python manage.py shell -c "from django.contrib.auth import get_user_model; print('admin existe:', get_user_model().objects.filter(username='admin').exists())"
+```
+
+Si imprime `admin existe: True`, ya corriste `seed_admin`.
+
+---
+
+### Credenciales del admin personalizadas (opcional)
+
+En Render → **Environment**, agrega:
+
+| Variable | Ejemplo |
+|---|---|
+| `DJANGO_SUPERUSER_USERNAME` | `admin` |
+| `DJANGO_SUPERUSER_EMAIL` | `admin@misterticket.com` |
+| `DJANGO_SUPERUSER_PASSWORD` | `tu-contraseña-fuerte` |
+
+Luego en **Shell**:
 
 ```bash
 python manage.py seed_admin
 ```
 
-Esto crea el superusuario `admin / admin123` y los usuarios de prueba.
+Render redeployará si guardaste variables nuevas; después vuelve a ejecutar `seed_admin` en Shell por si acaso.
 
-> Para cambiar las credenciales del admin, antes exporta:
-> ```bash
-> export DJANGO_SUPERUSER_USERNAME=admin
-> export DJANGO_SUPERUSER_EMAIL=admin@misterticket.com
-> export DJANGO_SUPERUSER_PASSWORD=tu-contraseña-fuerte
-> python manage.py seed_admin
-> ```
+---
 
-Si quieres datos de demo:
+### Actualizar Build Command manualmente (si NO usaste Blueprint)
+
+Si creaste el Web Service a mano y `render.yml` no se aplica solo:
+
+1. Render → tu servicio → **Settings**
+2. Busca **Build Command**
+3. Pega:
 
 ```bash
-python manage.py seeder_eventos
-python manage.py seeder_add_artistas
+pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate --noinput && python manage.py seed_admin && python manage.py seeder_eventos && python manage.py seeder_add_artistas
 ```
+
+4. **Save Changes** → Render redeploya y corre los seeders en el build
 
 ---
 
@@ -455,8 +549,10 @@ git push origin main
 
 # 5. En Render → Shell:
 python manage.py seed_admin
+python manage.py seeder_eventos
+python manage.py seeder_add_artistas
 
-# 6. Probar: https://tu-app.onrender.com/api/
+# 6. Probar: https://tu-app.onrender.com/admin/  (admin / admin123)
 ```
 
 ¡Listo, en producción! 🎉

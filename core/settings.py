@@ -99,8 +99,10 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Django 5: usar STORAGES (STATICFILES_STORAGE y STORAGES son mutuamente excluyentes)
+_STATICFILES_BACKEND = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # =============================================================================
 # STORAGE — MinIO (local) / AWS S3 (producción)
@@ -143,21 +145,33 @@ if USE_S3:
         AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com'
         MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/'
 
-    # Backend de almacenamiento: S3
     STORAGES = {
         'default': {
             'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',
         },
         'staticfiles': {
-            'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+            'BACKEND': _STATICFILES_BACKEND,
         },
     }
 
     print(f'[STORAGE] >> Usando MinIO/S3 -> Bucket: {AWS_STORAGE_BUCKET_NAME} | Endpoint: {AWS_S3_ENDPOINT_URL}')
 else:
-    # Almacenamiento local (comportamiento por defecto)
     MEDIA_URL = '/media/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+    STORAGES = {
+        'default': {
+            'BACKEND': 'django.core.files.storage.FileSystemStorage',
+            'OPTIONS': {
+                'location': MEDIA_ROOT,
+                'base_url': MEDIA_URL,
+            },
+        },
+        'staticfiles': {
+            'BACKEND': _STATICFILES_BACKEND,
+        },
+    }
+
     print(f'[STORAGE] >> Usando almacenamiento LOCAL -> {MEDIA_ROOT}')
 
 # Rest Framework settings
