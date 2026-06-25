@@ -50,8 +50,17 @@ Si has hecho cambios estructurales (añadir/quitar atributos en `models.py`) y q
    ```
 
 4. **Ejecutar Seeders (Cargar datos iniciales):**
+   Después de correr las migraciones, debes ejecutar los seeders en el siguiente orden para cargar la base de datos con información inicial de prueba:
+
    ```bash
-   python manage.py seed_departamentos_lugares
+   # 1. Crear el superusuario y roles
+   python manage.py seed_admin
+
+   # 2. Agregar 15 artistas de ejemplo
+   python manage.py seeder_add_artistas
+
+   # 3. Crear lugares, departamentos y 2 eventos
+   python manage.py seeder_eventos
    ```
 
 ---
