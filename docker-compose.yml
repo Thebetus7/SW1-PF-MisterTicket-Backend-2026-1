@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: misterticket_db
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_DB=misterticket_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=123456789
+    ports:
+      - "5432:5432"
+
+  web:
+    build: .
+    container_name: misterticket_backend
+    restart: always
+    command: gunicorn --bind 0.0.0.0:8000 --workers 3 --timeout 120 core.wsgi:application
+    volumes:
+      - .:/app
+    ports:
+      - "80:8000"  # Expone el puerto 80 del servidor hacia el 8000 del contenedor
+    environment:
+      - DEBUG=False
+      - SECRET_KEY=cambia-esto-por-una-clave-larga-aleatoria
+      - LIBELULA_API_KEY=xOvVur3LHQx7zHknwD2YOp4gS1Rr9U1PZ
+      - BACKEND_BASE_URL=http://TU_IP_PUBLICA_EC2
+      - USE_S3=False
+      - DB_NAME=misterticket_db
+      - DB_USER=postgres
+      - DB_PASSWORD=123456789
+      - DB_HOST=db  # Apunta al nombre del servicio de la BD
+      - DB_PORT=5432
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
