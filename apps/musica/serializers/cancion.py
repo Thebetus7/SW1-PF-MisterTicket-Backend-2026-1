@@ -6,6 +6,7 @@ class CancionSerializer(serializers.ModelSerializer):
     artista_nombre = serializers.CharField(source='artista.nombre_artistico', read_only=True)
     duracion_formateada = serializers.SerializerMethodField(read_only=True)
     tamano_formateado = serializers.SerializerMethodField(read_only=True)
+    plagio_de_titulo = serializers.CharField(source='plagio_de.nombre', read_only=True, default=None)
 
     class Meta:
         model = Cancion
@@ -15,9 +16,16 @@ class CancionSerializer(serializers.ModelSerializer):
             'duracion', 'duracion_formateada',
             'tamano', 'tamano_formateado',
             'formato',
+            'bpm', 'genero_ia', 'energia_ia', 'brillo_ia',
+            'es_plagio', 'similitud_plagio', 'plagio_de', 'plagio_de_titulo',
             'created_at', 'updated_at'
         )
-        read_only_fields = ('id', 'artista', 'archivo_url', 'duracion', 'tamano', 'formato', 'created_at', 'updated_at')
+        read_only_fields = (
+            'id', 'artista', 'archivo_url', 'duracion', 'tamano', 'formato', 
+            'bpm', 'genero_ia', 'energia_ia', 'brillo_ia', 
+            'es_plagio', 'similitud_plagio', 'plagio_de', 'plagio_de_titulo', 
+            'created_at', 'updated_at'
+        )
 
     def get_duracion_formateada(self, obj):
         if obj.duracion:

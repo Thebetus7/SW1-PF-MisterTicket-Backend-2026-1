@@ -2,6 +2,7 @@ import os
 from django.db import models
 from usuarios.models import Artista, SoftDeleteModel
 from mutagen import File as MutagenFile
+from musica.utils.analyzer import analizar_audio, calcular_similitud_coseno
 
 def cancion_archivo_upload_path(instance, filename):
     # Obtener extensión
@@ -35,6 +36,18 @@ class Cancion(SoftDeleteModel):
     duracion = models.FloatField(null=True, blank=True, verbose_name='Duración (segundos)')
     tamano = models.IntegerField(null=True, blank=True, verbose_name='Tamaño (bytes)')
     formato = models.CharField(max_length=50, null=True, blank=True, verbose_name='Formato')
+    
+    # Nuevos atributos calculados por IA Local
+    bpm = models.FloatField(null=True, blank=True, verbose_name='Tempo (BPM)')
+    genero_ia = models.CharField(max_length=100, null=True, blank=True, verbose_name='Género IA')
+    energia_ia = models.FloatField(null=True, blank=True, verbose_name='Energía IA')
+    brillo_ia = models.FloatField(null=True, blank=True, verbose_name='Brillo IA (Hz)')
+    
+    # Detección de Plagio e Infracciones
+    vector_timbre = models.JSONField(null=True, blank=True, verbose_name='Vector de Timbre (MFCC)')
+    es_plagio = models.BooleanField(default=False, verbose_name='Sospecha de Plagio')
+    similitud_plagio = models.FloatField(null=True, blank=True, verbose_name='Similitud de Plagio (%)')
+    plagio_de = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='sospechas_plagio', verbose_name='Plagio de')
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -94,8 +107,76 @@ class Cancion(SoftDeleteModel):
                 
                 self.duracion = duracion_segundos
                 
+                # 4. Extraer métricas de IA local
+                try:
+                    path_para_analizar = None
+                    if hasattr(self.archivo, 'path') and self.archivo.path and os.path.exists(self.archivo.path):
+                        path_para_analizar = self.archivo.path
+                    else:
+                        # Fallback temporal si está almacenado en la nube (S3/Minio)
+                        import tempfile
+                        self.archivo.open()
+                        with tempfile.NamedTemporaryFile(delete=False, suffix=f'.{ext}') as temp_file:
+                            temp_file.write(self.archivo.read())
+                            path_para_analizar = temp_file.name
+                    
+                    if path_para_analizar:
+                        resultados_ia = analizar_audio(path_para_analizar)
+                        self.bpm = resultados_ia['bpm']
+                        self.genero_ia = resultados_ia['genero']
+                        self.energia_ia = resultados_ia['energia']
+                        self.brillo_ia = resultados_ia['brillo']
+                        self.vector_timbre = resultados_ia['vector_timbre']
+                        
+                        # --- ALGORITMO DE DETECCION DE PLAGIO ---
+                        max_similitud = 0.0
+                        cancion_candidata = None
+                        
+                        # Obtener todas las canciones activas ordenadas por creación (primera importada primero)
+                        canciones_existentes = Cancion.objects.filter(
+                            deleted_at__isnull=True,
+                            vector_timbre__isnull=False
+                        ).order_by('created_at')
+                        
+                        if self.pk:
+                            canciones_existentes = canciones_existentes.exclude(pk=self.pk)
+                            
+                        for c in canciones_existentes:
+                            if c.vector_timbre and len(c.vector_timbre) > 0:
+                                sim = calcular_similitud_coseno(
+                                    self.vector_timbre, c.vector_timbre,
+                                    bpm1=self.bpm, bpm2=c.bpm,
+                                    energia1=self.energia_ia, energia2=c.energia_ia,
+                                    brillo1=self.brillo_ia, brillo2=c.brillo_ia
+                                )
+                                if sim > max_similitud:
+                                    max_similitud = sim
+                                    cancion_candidata = c
+                                    
+                        # Si la similitud tímbrica pura (sin volumen) supera el 95%
+                        if max_similitud >= 95.0:
+                            self.es_plagio = True
+                            self.similitud_plagio = max_similitud
+                            self.plagio_de = cancion_candidata
+                        else:
+                            self.es_plagio = False
+                            self.similitud_plagio = None
+                            self.plagio_de = None
+                        
+                        # Limpiar temporal si se generó uno
+                        if not hasattr(self.archivo, 'path') or not self.archivo.path:
+                            try:
+                                os.unlink(path_para_analizar)
+                            except Exception:
+                                pass
+                except Exception as ia_e:
+                    print(f"[ERROR IA ANALYZER] >> Error al correr análisis de IA local: {ia_e}")
+                
                 # Guardar únicamente los campos de metadatos para evitar bucle de save()
-                super().save(update_fields=['duracion', 'tamano', 'formato'])
+                super().save(update_fields=[
+                    'duracion', 'tamano', 'formato', 'bpm', 'genero_ia', 'energia_ia', 'brillo_ia',
+                    'vector_timbre', 'es_plagio', 'similitud_plagio', 'plagio_de'
+                ])
             except Exception as e:
                 print(f"[ERROR METADATOS AUDIO] >> No se pudieron extraer metadatos generales: {e}")
 

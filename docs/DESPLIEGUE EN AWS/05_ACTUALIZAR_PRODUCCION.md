@@ -51,6 +51,11 @@ docker-compose exec web python manage.py collectstatic --noinput
 docker-compose logs --tail=50 web
 ```
 
+**7. Verifica que los contenedores estén activos y corriendo correctamente:**
+```bash
+docker-compose ps
+```
+
 ---
 
 ### Resumen rápido (solo servidor AWS)

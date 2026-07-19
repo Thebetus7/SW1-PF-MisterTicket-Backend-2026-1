@@ -13,3 +13,6 @@ stripe==15.2.1
 firebase-admin==6.6.0
 requests==2.32.3
 whitenoise==6.7.0
+librosa==0.10.1
+scikit-learn==1.4.1.post1
+soundfile==0.12.1

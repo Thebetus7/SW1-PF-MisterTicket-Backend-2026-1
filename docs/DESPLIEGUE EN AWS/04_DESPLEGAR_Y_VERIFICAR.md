@@ -12,7 +12,8 @@ cd misterticket-backend
 ## 4.2 Subir credenciales de Firebase
 Si usas Firebase y `firebase-credentials.json` no está en git, cópialo con `scp` desde tu PC:
 ```bash
-scp -i misterticket-key.pem firebase-credentials.json ec2-user@TU_IP_PUBLICA_EC2:/home/ec2-user/misterticket-backend/
+scp -i ~/.ssh/misterticket-backend-key.pem firebase-credentials.json ec2-user@TU_IP_PUBLICA_EC2:/home/ec2-user/misterticket-backend/
+
 ```
 
 ## 4.3 Levantar contenedores
@@ -65,7 +66,7 @@ docker-compose up -d --build
 docker-compose logs -f web
 ```
 
-### Detener los Contenedores:
+### Detener los Contenedores s:
 ```bash
 docker-compose down
 ```
