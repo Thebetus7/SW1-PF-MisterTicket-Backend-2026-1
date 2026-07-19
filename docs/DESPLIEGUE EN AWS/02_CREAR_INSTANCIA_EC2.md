@@ -17,5 +17,5 @@ Anota la **IP pública** de tu nueva instancia.
 
 ---
 
-> **Siguiente paso:** [03_INSTALAR_HERRAMIENTAS.md](./03_INSTALAR_HERRAMIENTAS.md)  
+> **Siguiente paso:** [03_CONFIGURAR_S3.md](./03_CONFIGURAR_S3.md)  
 > **Volver al índice:** [00_RESUMEN_GENERAL.md](./00_RESUMEN_GENERAL.md)

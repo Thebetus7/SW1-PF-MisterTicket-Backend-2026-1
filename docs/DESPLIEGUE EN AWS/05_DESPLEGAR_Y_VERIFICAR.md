@@ -1,4 +1,4 @@
-# Paso 4: Subir y Desplegar el Proyecto en AWS
+# Paso 5: Subir y Desplegar el Proyecto en AWS
 
 Una vez preparadas las herramientas en el servidor, desplegaremos la aplicación y la base de datos PostgreSQL.
 
@@ -78,5 +78,5 @@ docker-compose up -d
 
 ---
 
-> **Siguiente paso:** [05_ACTUALIZAR_PRODUCCION.md](./05_ACTUALIZAR_PRODUCCION.md)  
+> **Siguiente paso:** [06_ACTUALIZAR_PRODUCCION.md](./06_ACTUALIZAR_PRODUCCION.md)  
 > **Volver al índice:** [00_RESUMEN_GENERAL.md](./00_RESUMEN_GENERAL.md)

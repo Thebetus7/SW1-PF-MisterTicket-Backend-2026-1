@@ -52,3 +52,7 @@ Puedes resumir todo lo anterior ejecutando una purga completa que borra contened
 ```bash
 docker system prune -a --volumes -f
 ```
+
+---
+
+> **Volver al índice:** [00_RESUMEN_GENERAL.md](./00_RESUMEN_GENERAL.md)

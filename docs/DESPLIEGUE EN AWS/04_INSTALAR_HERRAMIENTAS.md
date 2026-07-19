@@ -1,4 +1,4 @@
-# Paso 3: Instalar Docker, Buildx y Docker Compose en la EC2
+# Paso 4: Instalar Docker, Buildx y Docker Compose en la EC2
 
 Conéctate por SSH a la EC2 y ejecuta los pasos en orden.
 
@@ -76,5 +76,5 @@ docker buildx version
 
 ---
 
-> **Siguiente paso:** [04_DESPLEGAR_Y_VERIFICAR.md](./04_DESPLEGAR_Y_VERIFICAR.md)  
+> **Siguiente paso:** [05_DESPLEGAR_Y_VERIFICAR.md](./05_DESPLEGAR_Y_VERIFICAR.md)  
 > **Volver al índice:** [00_RESUMEN_GENERAL.md](./00_RESUMEN_GENERAL.md)

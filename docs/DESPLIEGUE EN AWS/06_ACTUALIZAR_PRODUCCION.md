@@ -1,4 +1,4 @@
-# Paso 5: Actualizar el Proyecto en Producción
+# Paso 6: Actualizar el Proyecto en Producción
 
 Cuando modificas código en tu PC y quieres que esos cambios se reflejen en AWS, el flujo es el siguiente:
 
@@ -74,5 +74,5 @@ docker-compose logs --tail=30 web
 
 ---
 
-> **Siguiente paso:** [06_APAGAR_SERVICIOS.md](./06_APAGAR_SERVICIOS.md)  
+> **Siguiente paso:** [07_APAGAR_SERVICIOS.md](./07_APAGAR_SERVICIOS.md)  
 > **Volver al índice:** [00_RESUMEN_GENERAL.md](./00_RESUMEN_GENERAL.md)
