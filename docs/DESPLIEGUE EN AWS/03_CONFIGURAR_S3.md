@@ -173,7 +173,10 @@ Dado que el backend de Django ya está preparado en su archivo `settings.py` par
       - AWS_S3_REGION_NAME=us-east-1  # Reemplaza por tu región si es distinta
 ```
 
-> *Nota: Asegúrate de borrar o no incluir la variable `AWS_S3_ENDPOINT_URL` en producción, ya que esta solo se utiliza para MinIO local y causaría fallas de conexión al intentar comunicarse con AWS S3.*
+> [!WARNING]
+> **Cuidado con el archivo `.env` residual en el servidor:**
+> Dado que Django lee el archivo `.env` al iniciar (mediante `load_dotenv()`), si existe un archivo `.env` en el servidor que contiene la línea `AWS_S3_ENDPOINT_URL=http://localhost:9000` (o similar), Django la priorizará e intentará conectarse a MinIO local en lugar de a AWS S3 real.
+> **Solución:** Edita el archivo `.env` en tu servidor (`nano .env`) y elimina o comenta esa línea (poniendo un `#` al inicio: `#AWS_S3_ENDPOINT_URL=...`). Lo ideal en producción es que elimines el archivo `.env` por completo y manejes todo a través del entorno del `docker-compose.yml`.
 
 4. Guarda los cambios en `nano` presionando `Ctrl + O`, presiona `Enter` para confirmar, y luego sal con `Ctrl + X`.
 

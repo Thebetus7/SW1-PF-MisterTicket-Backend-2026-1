@@ -57,6 +57,18 @@ sudo systemctl restart docker
 docker-compose up -d --build
 ```
 
+### Django muestra "Usando MinIO/S3 -> Endpoint: http://localhost:9000" en producción
+Si al correr las migraciones o iniciar el backend observas que intenta conectarse a `localhost:9000` en lugar de S3:
+* **Causa:** Existe un archivo `.env` residual en el servidor (generalmente subido por error o creado de forma predeterminada) que define la variable `AWS_S3_ENDPOINT_URL=http://localhost:9000`. Django la lee y prioriza sobre la configuración del `docker-compose.yml`.
+* **Solución:** Abre el archivo `.env` en el servidor (`nano .env`) y elimina o comenta la línea colocándole un `#` por delante:
+  ```env
+  # AWS_S3_ENDPOINT_URL=http://localhost:9000
+  ```
+  Luego reinicia los contenedores:
+  ```bash
+  docker-compose down && docker-compose up -d
+  ```
+
 ---
 
 ## 🛑 Comandos de Mantenimiento

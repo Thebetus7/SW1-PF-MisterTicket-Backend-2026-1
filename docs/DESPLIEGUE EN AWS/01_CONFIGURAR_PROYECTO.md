@@ -13,12 +13,13 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# Instalar dependencias del sistema (psycopg2 + Pillow + mutagen)
+# Instalar dependencias del sistema (psycopg2 + Pillow + mutagen + ffmpeg)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     gcc \
     libjpeg62-turbo-dev \
     zlib1g-dev \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # Instalar dependencias del proyecto
@@ -80,6 +81,10 @@ services:
 volumes:
   postgres_data:
 ```
+
+> [!NOTE]
+> **Sobre MinIO vs AWS S3:** 
+> Por defecto, esta plantilla utiliza almacenamiento local. Si vas a habilitar AWS S3 real para producción en tu servidor (siguiendo el Paso 3), asegúrate de que no exista la variable `AWS_S3_ENDPOINT_URL` en tu entorno ni en un archivo `.env` residual en el servidor, ya que Django prioriza el archivo `.env` y esto haría que intente conectarse al puerto local `9000` (MinIO local).
 
 ---
 
