@@ -36,6 +36,16 @@ from django.conf import settings
 MODEL_DIR = os.path.join(settings.BASE_DIR, 'core', 'ia_models')
 MODEL_PATH = os.path.join(MODEL_DIR, 'genero_classifier.joblib')
 
+# Cargar el modelo clasificador scikit-learn de forma global una sola vez al inicio para optimizar CPU y memoria
+MODELO_CLASIFICADOR_GLOBAL = None
+if os.path.exists(MODEL_PATH):
+    try:
+        print("[IA ANALYZER] Cargando modelo clasificador scikit-learn de forma global...")
+        MODELO_CLASIFICADOR_GLOBAL = joblib.load(MODEL_PATH)
+        print("[IA ANALYZER] Modelo clasificador global cargado correctamente.")
+    except Exception as e:
+        print(f"[IA ANALYZER] Error al cargar el modelo clasificador global: {e}")
+
 def analizar_audio(file_path):
     """
     Analiza un archivo de audio local utilizando Librosa para extraer:
@@ -115,18 +125,16 @@ def analizar_audio(file_path):
             *mfccs_mean
         ]])
 
-        if os.path.exists(MODEL_PATH):
+        if MODELO_CLASIFICADOR_GLOBAL is not None:
             try:
-                print("[IA ANALYZER] Cargando modelo clasificador scikit-learn local...")
-                model = joblib.load(MODEL_PATH)
-                pred = model.predict(feature_vector)
+                pred = MODELO_CLASIFICADOR_GLOBAL.predict(feature_vector)
                 genero_predicho = str(pred[0])
                 print(f"[IA ANALYZER] Inferencia de modelo exitosa. Género: {genero_predicho}")
             except Exception as ml_err:
                 print(f"[IA ANALYZER] Error al correr inferencia de modelo scikit-learn: {ml_err}. Usando fallback...")
                 genero_predicho = clasificar_heuristico(bpm_estimado, energia_normalizada, brillo_promedio)
         else:
-            print("[IA ANALYZER] Modelo scikit-learn local no encontrado. Usando clasificador acústico heurístico...")
+            print("[IA ANALYZER] Modelo scikit-learn global no disponible. Usando clasificador acústico heurístico...")
             genero_predicho = clasificar_heuristico(bpm_estimado, energia_normalizada, brillo_promedio)
 
         resultado = {
