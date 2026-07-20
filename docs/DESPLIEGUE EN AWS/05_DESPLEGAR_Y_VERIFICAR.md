@@ -69,6 +69,26 @@ Si al correr las migraciones o iniciar el backend observas que intenta conectars
   docker-compose down && docker-compose up -d
   ```
 
+### S3 Error: "ValueError: Invalid endpoint:" o Error 500 al subir archivos a Amazon
+Si la consola de Django muestra un error de `Invalid endpoint: ` vacío al subir archivos:
+* **Causa:** En el archivo `core/settings.py`, la variable `AWS_S3_ENDPOINT_URL` lee un texto vacío `''` en lugar de `None` si la variable de entorno está vacía o configurada como `AWS_S3_ENDPOINT_URL=`. Amazon S3 falla al intentar usar el string vacío como URL.
+* **Solución:** Asegúrate de que en `core/settings.py` el fallback sea `None`:
+  `AWS_S3_ENDPOINT_URL = os.getenv('AWS_S3_ENDPOINT_URL', None)`
+
+### El contenedor no lee mis cambios en el archivo `.env`
+Si editas el `.env` pero el servidor no aplica los cambios (ej. `USE_S3` sigue siendo `False`):
+* **Causa 1:** Las variables están escritas directamente (harcodeadas) dentro del archivo `docker-compose.yml` en la sección `environment:`. Lo que esté ahí **sobreescribirá** cualquier valor del `.env`. Además, debe estar presente la instrucción `env_file: - .env` para que el archivo sea leído.
+* **Solución 1:** Borra o comenta las variables conflictivas dentro de `docker-compose.yml` y agrégalas a tu `.env`.
+* **Causa 2:** Reiniciaste con `docker-compose restart`. Este comando **no lee** cambios en el `.env` ni en el compose.
+* **Solución 2:** Usa siempre `docker-compose up -d --force-recreate` para obligarlo a leer la nueva configuración.
+
+### Error 500 en IA Analyzer: "No module named 'pkg_resources'"
+Si la subida de canciones falla con error de IA relacionado a `pkg_resources`:
+* **Causa:** En versiones recientes de Python, el paquete `setuptools` eliminó el módulo `pkg_resources`. Sin embargo, `imageio-ffmpeg` lo sigue necesitando.
+* **Solución:** Limita la versión de setuptools en tu archivo `requirements.txt` a:
+  `setuptools<70.0.0`
+  Y reconstruye la imagen con `docker-compose up -d --build`.
+
 ---
 
 ## 🛑 Comandos de Mantenimiento

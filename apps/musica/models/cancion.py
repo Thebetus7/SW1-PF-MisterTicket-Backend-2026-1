@@ -110,7 +110,14 @@ class Cancion(SoftDeleteModel):
                 # 4. Extraer métricas de IA local
                 try:
                     path_para_analizar = None
-                    if hasattr(self.archivo, 'path') and self.archivo.path and os.path.exists(self.archivo.path):
+                    path_exists = False
+                    try:
+                        if hasattr(self.archivo, 'path') and self.archivo.path:
+                            path_exists = os.path.exists(self.archivo.path)
+                    except (NotImplementedError, AttributeError):
+                        path_exists = False
+
+                    if path_exists:
                         path_para_analizar = self.archivo.path
                     else:
                         # Fallback temporal si está almacenado en la nube (S3/Minio)

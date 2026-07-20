@@ -17,4 +17,4 @@ librosa==0.10.1
 scikit-learn==1.4.1.post1
 soundfile==0.12.1
 imageio-ffmpeg==0.4.9
-setuptools
+setuptools<70.0.0

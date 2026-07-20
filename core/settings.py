@@ -118,7 +118,7 @@ if USE_S3:
     AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'us-east-1')
 
     # Para MinIO local — se omite en producción con AWS S3 real
-    AWS_S3_ENDPOINT_URL = os.getenv('AWS_S3_ENDPOINT_URL', '')
+    AWS_S3_ENDPOINT_URL = os.getenv('AWS_S3_ENDPOINT_URL', None)
 
     # MinIO no soporta ACLs por defecto, así que no establecemos ACL
     # Si usas AWS S3 en producción, descomenta la siguiente línea:
